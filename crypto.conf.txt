@@ -1,0 +1,3 @@
+algorithm=AES_GCM
+rng=/dev/urandom
+seed=12345
