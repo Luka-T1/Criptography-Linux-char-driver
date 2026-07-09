@@ -1,13 +1,11 @@
 /*
- * test_weakrng.c
- *
  * Program koji dokazuje da je weakrng zaista predvidiv.
  *
  * Postupak:
- *  1. Otvara /dev/weakrng, upisuje seed, cita "prave" bajtove
+ *  1. Otvara /dev/weakrng, upisuje seed, cita prave bajtove
  *     direktno od drajvera (kernel strana).
- *  2. Nezavisno racuna "predvidjene" bajtove istim algoritmom
- *     u korisnickom prostoru (userspace).
+ *  2. Nezavisno racuna predvidjene bajtove istim algoritmom
+ *     u korisnickom prostoru.
  *  3. Poredi ta dva niza. Ako su identicni, dokazano je da
  *     napadac moze unapred da zna izlaz RNG-a.
  */
@@ -97,10 +95,10 @@ int main(int argc, char *argv[])
     int i, mismatch;
 
     if (argc != 3) {
-        printf("Upotreba:\n");
-        printf("%s <seed> <broj_bajtova>\n", argv[0]);
-        printf("\nPrimer:\n");
-        printf("%s 12345 16\n", argv[0]);
+        printf("Upotreba: \n");
+        printf("%s <seed> <broj_bajtova> \n", argv[0]);
+        printf("Primer: \n");
+        printf("%s 12345 16 \n", argv[0]);
         return 1;
     }
 
@@ -108,7 +106,7 @@ int main(int argc, char *argv[])
     count = atoi(argv[2]);
 
     if (count <= 0) {
-        printf("Greska: broj bajtova mora biti pozitivan.\n");
+        printf("Greska: broj bajtova mora biti pozitivan. \n");
         return 1;
     }
 
@@ -116,7 +114,7 @@ int main(int argc, char *argv[])
     predicted_bytes = malloc(count);
 
     if (real_bytes == NULL || predicted_bytes == NULL) {
-        printf("Greska: malloc nije uspeo.\n");
+        printf("Greska: malloc nije uspeo. \n");
         return 1;
     }
 
@@ -128,18 +126,18 @@ int main(int argc, char *argv[])
 
     predict_bytes(seed, predicted_bytes, count);
 
-    printf("=== Test weakrng predvidivosti ===\n");
-    printf("Seed: %llu\n", (unsigned long long)seed);
+    printf(" Test weakrng predvidivosti \n");
+    printf("Seed: %llu \n", (unsigned long long)seed);
 
     printf("Pravi izlaz drajvera:   ");
     for (i = 0; i < count; i++) {
-        printf("%02X", real_bytes[i]);
+        printf("%u", real_bytes[i]);
     }
     printf("\n");
 
     printf("Predvidjeni izlaz:      ");
     for (i = 0; i < count; i++) {
-        printf("%02X", predicted_bytes[i]);
+        printf("%u", predicted_bytes[i]);
     }
     printf("\n");
 
@@ -150,11 +148,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("\nRezultat: ");
+    printf("Rezultat: ");
     if (mismatch == 0) {
-        printf("USPESNO - svi bajtovi su tacno predvidjeni (%d/%d)\n", count, count);
+        printf("USPESNO - svi bajtovi su tacno predvidjeni (%d/%d) \n", count, count);
     } else {
-        printf("NEUSPESNO - %d od %d bajtova se ne poklapa\n", mismatch, count);
+        printf("NEUSPESNO - %d od %d bajtova se ne poklapa \n", mismatch, count);
     }
 
     free(real_bytes);

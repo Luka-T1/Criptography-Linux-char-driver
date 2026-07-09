@@ -1,6 +1,4 @@
 /*
- * weakrng_driver.c
- *
  * Jednostavan Linux character device drajver koji simulira
  * namerno slab (predvidiv) generator pseudoslucajnih brojeva.
  *
@@ -10,10 +8,6 @@
  *  - Posto se koristi jednostavan algoritam i poznat seed, napadac
  *    moze u korisnickom prostoru (attacker_decrypt_weak.c) da
  *    izracuna potpuno isti niz bajtova.
- *
- * Namerno je implementirano samo sa osnovne 4 operacije:
- * open, release, read i write - bez ioctl-a i slicnih dodataka,
- * da bi drajver ostao jednostavan i pregledan za citanje.
  */
 
 #include <linux/module.h>
@@ -22,6 +16,7 @@
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
+#include <linux/version.h>
 
 #define DEVICE_NAME "weakrng"
 #define CLASS_NAME  "weakrng_class"
@@ -38,11 +33,6 @@ static struct device *weakrng_device = NULL;
 /* Interno stanje generatora - isti princip kao u napadacevom kodu */
 static u64 rng_state;
 
-/*
- * Generator brojeva - identican algoritam kao weakrng_next_u64()
- * iz attacker_decrypt_weak.c. Bitno je da se ova dva algoritma
- * poklapaju bajt po bajt, inace napadac ne moze da predvidi izlaz.
- */
 static u64 weakrng_next_u64(void)
 {
     u64 z;
@@ -58,13 +48,11 @@ static u64 weakrng_next_u64(void)
 
 static int dev_open(struct inode *inodep, struct file *filep)
 {
-    /* Ne treba nam nikakva posebna priprema pri otvaranju */
     return 0;
 }
 
 static int dev_release(struct inode *inodep, struct file *filep)
 {
-    /* Ni ovde nema nista posebno da se oslobodi */
     return 0;
 }
 
@@ -86,7 +74,6 @@ static ssize_t dev_write(struct file *filep, const char __user *buffer,
 
     seed_text[copy_len] = '\0';
 
-    /* simple_strtoull parsira decimalni broj iz stringa */
     rng_state = simple_strtoull(seed_text, NULL, 0);
 
     return len;
@@ -136,11 +123,15 @@ static int __init weakrng_init(void)
 {
     major_number = register_chrdev(0, DEVICE_NAME, &fops);
     if (major_number < 0) {
-        printk(KERN_ALERT "weakrng: registracija drajvera nije uspela\n");
+        printk(KERN_ALERT "weakrng: registracija drajvera nije uspela \n");
         return major_number;
     }
 
-    weakrng_class = class_create(THIS_MODULE, CLASS_NAME);
+   #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,4,0)
+     weakrng_class = class_create(CLASS_NAME);
+   #else
+     weakrng_class = class_create(THIS_MODULE, CLASS_NAME);
+   #endif
     if (IS_ERR(weakrng_class)) {
         unregister_chrdev(major_number, DEVICE_NAME);
         return PTR_ERR(weakrng_class);

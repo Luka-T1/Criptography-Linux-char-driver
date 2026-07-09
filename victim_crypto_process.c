@@ -1,14 +1,8 @@
 /*
- * victim_crypto_process.c
- *
- * Ovo je proces "zrtve" - obican program koji zeli da sifruje
+ * Ovo je proces zrtve - obican program koji zeli da sifruje
  * poruku. On ne zna i ne mora da zna da li trenutno koristi
  * bezbedan ili napadnut RNG - samo cita podesavanja iz crypto.conf
  * i radi ono sto pise.
- *
- * U normalnom rezimu koristi AES-256-GCM sa /dev/urandom.
- * U napadnutom rezimu koristi jednostavan XOR sa slabim
- * generatorom iz /dev/weakrng.
  */
 
 #include <stdio.h>
@@ -87,7 +81,6 @@ int get_random_bytes(const CryptoConfig *cfg, unsigned char *buffer, int len)
         return -1;
     }
 
-    /* Kod weakrng-a prvo saljemo seed, pravi RNG (/dev/urandom) to ne trazi */
     if (strcmp(cfg->rng_path, "/dev/weakrng") == 0) {
         write(fd, cfg->seed, strlen(cfg->seed));
     }
@@ -146,12 +139,12 @@ void weak_stream_encrypt(const CryptoConfig *cfg, const unsigned char *plaintext
 
     keystream = malloc(plaintext_len);
     if (keystream == NULL) {
-        printf("Greska: malloc nije uspeo.\n");
+        printf("Greska: malloc nije uspeo. \n");
         exit(1);
     }
 
     if (get_random_bytes(cfg, keystream, plaintext_len) != 0) {
-        printf("Greska: ne mogu da citam iz weakrng.\n");
+        printf("Greska: ne mogu da citam iz weakrng. \n");
         free(keystream);
         exit(1);
     }
@@ -185,10 +178,10 @@ int main(int argc, char *argv[])
     plaintext[MAX_TEXT - 1] = '\0';
     plaintext_len = strlen((char *)plaintext);
 
-    printf("=== Victim crypto process ===\n");
-    printf("Algorithm: %s\n", cfg.algorithm);
-    printf("RNG: %s\n", cfg.rng_path);
-    printf("Plaintext: %s\n\n", plaintext);
+    printf(" Victim crypto process  \n");
+    printf("Algorithm: %s \n", cfg.algorithm);
+    printf("RNG: %s \n", cfg.rng_path);
+    printf("Plaintext: %s \n\n", plaintext);
 
     if (strcmp(cfg.algorithm, "AES_GCM") == 0) {
         get_random_bytes(&cfg, key, KEY_SIZE);
@@ -196,29 +189,29 @@ int main(int argc, char *argv[])
 
         ciphertext_len = aes_gcm_encrypt(plaintext, plaintext_len, key, iv, ciphertext, tag);
         if (ciphertext_len < 0) {
-            printf("AES-GCM encryption failed.\n");
+            printf("AES-GCM encryption failed. \n");
             return 1;
         }
 
-        printf("MODE=AES_GCM\n");
+        printf("MODE=AES_GCM \n");
         print_hex("IV=", iv, IV_SIZE);
         print_hex("TAG=", tag, TAG_SIZE);
         print_hex("CIPHERTEXT=", ciphertext, ciphertext_len);
 
-        printf("\nObjasnjenje:\n");
-        printf("Normalan rezim: proveren algoritam AES-GCM i sistemski RNG.\n");
+        printf("Objasnjenje: \n");
+        printf("Normalan rezim: proveren algoritam AES-GCM i sistemski RNG. \n");
     } else if (strcmp(cfg.algorithm, "WEAK_STREAM") == 0) {
         weak_stream_encrypt(&cfg, plaintext, plaintext_len, ciphertext);
 
-        printf("MODE=WEAK_STREAM\n");
-        printf("SEED=%s\n", cfg.seed);
+        printf("MODE=WEAK_STREAM \n");
+        printf("SEED=%s \n", cfg.seed);
         print_hex("CIPHERTEXT=", ciphertext, plaintext_len);
 
-        printf("\nObjasnjenje:\n");
-        printf("Napadnut rezim: algoritam je zamenjen slabim WEAK_STREAM rezimom.\n");
-        printf("Ciphertext postoji, ali je niz predvidiv ako se zna seed.\n");
+        printf("Objasnjenje: \n");
+        printf("Napadnut rezim: algoritam je zamenjen slabim WEAK_STREAM rezimom. \n");
+        printf("Ciphertext postoji, ali je niz predvidiv ako se zna seed. \n");
     } else {
-        printf("Nepoznat algoritam u crypto.conf: %s\n", cfg.algorithm);
+        printf("Nepoznat algoritam u crypto.conf: %s \n", cfg.algorithm);
         return 1;
     }
 

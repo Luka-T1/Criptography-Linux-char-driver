@@ -1,12 +1,10 @@
 /*
- * predict_weakrng.c
- *
- * Jednostavan program koji "predvidja" izlaz weakrng drajvera.
+ * Program koji predvidja izlaz weakrng drajvera.
  * Ako znamo seed i algoritam, mozemo unapred da izracunamo
  * potpuno isti niz bajtova koji ce drajver da vrati.
  *
  * Ovaj isti algoritam mora da bude identican onom u
- * weakrng_driver.c (kernel strana) da bi predikcija bila tacna.
+ * weakrng_driver.c da bi predikcija bila tacna.
  */
 
 #include <stdio.h>
@@ -53,10 +51,10 @@ int main(int argc, char *argv[])
     int i;
 
     if (argc != 3) {
-        printf("Upotreba:\n");
+        printf("Upotreba: \n");
         printf("%s <seed> <broj_bajtova>\n", argv[0]);
-        printf("\nPrimer:\n");
-        printf("%s 12345 16\n", argv[0]);
+        printf("Primer: \n");
+        printf("%s 12345 16 \n", argv[0]);
         return 1;
     }
 
@@ -64,7 +62,7 @@ int main(int argc, char *argv[])
     count = atoi(argv[2]);
 
     if (count <= 0) {
-        printf("Greska: broj bajtova mora biti pozitivan.\n");
+        printf("Greska: broj bajtova mora biti pozitivan. \n");
         return 1;
     }
 
@@ -76,24 +74,23 @@ int main(int argc, char *argv[])
 
     predict_bytes(seed, keystream, count);
 
-    printf("=== Predikcija weakrng izlaza ===\n");
-    printf("Seed: %llu\n", (unsigned long long)seed);
+    printf(" Predikcija weakrng izlaza \n");
+    printf("Seed: %llu \n", (unsigned long long)seed);
 
-    printf("Bajtovi (hex): ");
+    printf("Bajtovi: ");
     for (i = 0; i < count; i++) {
         printf("%02X", keystream[i]);
     }
     printf("\n");
 
-    printf("Cifre (bajt mod 10): ");
+    printf("Cifre: ");
     for (i = 0; i < count; i++) {
         printf("%d", keystream[i] % 10);
     }
     printf("\n");
 
-    printf("\nObjasnjenje:\n");
-    printf("Ovi bajtovi su izracunati bez ikakvog pristupa drajveru,\n");
-    printf("samo na osnovu poznatog seeda i algoritma.\n");
+    printf("Objasnjenje: \n");
+    printf("Ovi bajtovi su izracunati bez ikakvog pristupa drajveru, samo na osnovu poznatog seeda i algoritma. \n");
 
     free(keystream);
     return 0;

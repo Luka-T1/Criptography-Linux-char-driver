@@ -1,59 +1,56 @@
 # WeakRNG — demonstracija slabog generatora slučajnih brojeva
 
-## Ideja projekta
+Cilj ovog projekta je da pokaže zašto je za kriptografiju bitno koristiti
+kriptografski siguran generator slučajnih brojeva.
 
-Cilj projekta je da pokaže zašto je za kriptografiju bitno koristiti
-kriptografski siguran generator slučajnih brojeva umesto jednostavnog i
-predvidivog algoritma.
+Ideja: isti proces žrtve može da radi u dva režima — normalnom (siguran) 
+i napadnutom (slab). U napadnutom režimu se koristi predvidiv RNG, pa 
+napadač koji zna seed može da rekonstruiše ceo keystream i dešifruje poruku.
 
-Zamisao je da isti proces "žrtve" može da radi u dva režima:
+## Delovi projekta
 
-- **normalan (bezbedan)** režim — koristi proveren algoritam i sistemski RNG,
-- **napadnut (slab)** režim — koristi predvidiv generator, gde napadač koji
-  zna seed može da rekonstruiše keystream i dešifruje poruku.
+- **weakrng_driver.c** — kernel modul (char device drajver) koji pravi
+  `/dev/weakrng`. Korisnik prvo upiše seed, pa čita bajtove. Namerno koristi
+  slab, predvidiv generator.
 
-Time se demonstrira da nešto može statistički da *izgleda* slučajno, a da je u
-stvari potpuno predvidivo.
+- **victim_crypto_process.c** — proces žrtve. Čita podešavanja iz
+  `crypto.conf` i šifruje poruku. U normalnom režimu koristi AES-256-GCM sa
+  `/dev/urandom`, a u napadnutom XOR sa slabim keystream-om iz `/dev/weakrng`.
 
-## Planirane komponente
+- **attacker_decrypt_weak.c** — proces napadača. Ako zna algoritam i seed,
+  izračuna isti keystream i dešifruje ciphertext.
 
-- **weakrng_driver.c** — kernel modul (char device) koji pravi `/dev/weakrng`.
-  Treba da primi seed, pa da na čitanje vraća niz bajtova iz slabog generatora.
+- **predict_weakrng.c** — predviđa izlaz drajvera samo na osnovu seeda i
+  algoritma, bez pristupa samom drajveru.
 
-- **victim_crypto_process.c** — proces "žrtve". Čita podešavanja iz
-  `crypto.conf` i šifruje poruku. U normalnom režimu treba da koristi siguran
-  algoritam i sistemski RNG, a u napadnutom slab keystream iz drajvera.
+- **test_weakrng.c** — poredi prave bajtove iz drajvera sa nezavisno
+  izračunatim bajtovima. Ako se poklapaju, dokazano je da je RNG predvidiv.
 
-- **attacker_decrypt_weak.c** — proces "napadača" koji, ako zna seed i
-  algoritam, treba da rekonstruiše isti keystream i dešifruje ciphertext.
-
-- **predict_weakrng.c** — treba da predvidi izlaz drajvera samo na osnovu
-  seeda, bez pristupa drajveru.
-
-- **test_weakrng.c** — poredi izlaz drajvera sa nezavisno izračunatim bajtovima
-  da bi dokazao predvidivost.
-
-- **frequency_test.c** — statistički test koji pokazuje da izlaz izgleda
-  ravnomerno raspoređen.
+- **frequency_test.c** — statistički test: pokazuje da izlaz izgleda
+  slučajno, iako je u stvari potpuno predvidiv.
 
 - **crypto.conf** — konfiguracioni fajl (algoritam, RNG, seed).
 
-- **attack_change_algorithm.sh / normal_mode.sh** — skripte koje prebacuju
-  sistem između napadnutog i normalnog režima.
+- **attack_change_algorithm.sh** — menja `crypto.conf` u napadnuti režim
+  (WEAK_STREAM + `/dev/weakrng`).
 
-## Grubi plan rada (faze)
+- **normal_mode.sh** — vraća `crypto.conf` u normalan, bezbedan režim.
 
-1. **Koncept i struktura** — definisati ideju i napraviti fajlove 
-2. **Drajver** — implementirati `/dev/weakrng` i osnovne operacije (read/write)
-3. **Žrtva** — proces koji šifruje poruku i čita `crypto.conf`
-4. **Napad** — napadnuti režim, attacker proces i test predvidivosti
-5. **Provere i demonstracija** — statistički test i skripte za prebacivanje režima
-
-## Pokretanje (planirano)
+## Pokretanje
 
 ```bash
-make            # kompajlira drajver i programe
+make            # kompajlira drajver i sve programe
 make load       # učitava modul i pravi /dev/weakrng
+
+./normal_mode.sh              # bezbedan režim
+./attack_change_algorithm.sh  # napadnuti režim
+
 make unload     # uklanja modul
-make clean      # briše izgrađeno
+make clean      # briše sve izgrađeno
 ```
+
+## Poenta
+
+Slab RNG može da prođe statističke testove i da izgleda slučajno, ali
+ako se zna seed, izlaz je u potpunosti predvidiv. Zato se za značajne procese koriste bezbedniji,
+sigurni sistemski RNG generatori koji nemaju predstavljene mane.

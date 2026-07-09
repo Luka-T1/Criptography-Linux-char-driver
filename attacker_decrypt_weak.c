@@ -1,13 +1,11 @@
 /*
- * attacker_decrypt_weak.c
- *
- * Ovo je proces "napadaca". On zna dve stvari koje ne bi trebalo
+ * Ovo je proces napadaca. On zna dve stvari koje ne bi trebalo
  * da zna: algoritam koji se koristi (WEAK_STREAM) i seed koji
  * je upotrebljen. Sa tim znanjem moze da izracuna potpuno isti
  * keystream kao zrtva i da dekriptuje ciphertext.
  *
  * Ovo dokazuje zasto je vazno koristiti kriptografski siguran
- * generator slucajnih brojeva (npr. /dev/urandom), a ne
+ * generator slucajnih brojeva, a ne
  * jednostavan, predvidiv algoritam.
  */
 
@@ -95,7 +93,7 @@ int main(int argc, char *argv[])
     if (argc != 3) {
         printf("Upotreba:\n");
         printf("%s <seed> <ciphertext_hex>\n", argv[0]);
-        printf("\nPrimer:\n");
+        printf("Primer: \n");
         printf("%s 12345 AABBCC\n", argv[0]);
         return 1;
     }
@@ -104,7 +102,7 @@ int main(int argc, char *argv[])
     ciphertext_len = parse_hex(argv[2], ciphertext);
 
     if (ciphertext_len < 0) {
-        printf("Greska: ciphertext mora biti validan hex string.\n");
+        printf("Greska: ciphertext mora biti validan string.\n");
         return 1;
     }
 
@@ -115,13 +113,12 @@ int main(int argc, char *argv[])
     }
     plaintext[ciphertext_len] = '\0';
 
-    printf("=== Attacker decrypt ===\n");
+    printf(" Attacker decrypt \n");
     printf("Seed: %llu\n", (unsigned long long)seed);
     printf("Predicted plaintext:\n%s\n", plaintext);
 
-    printf("\nObjasnjenje:\n");
-    printf("Posto je algoritam WEAK_STREAM, a napadac zna seed,\n");
-    printf("moze da rekonstruise isti keystream i dekriptuje poruku.\n");
+    printf("Objasnjenje:\n");
+    printf("Posto je algoritam WEAK_STREAM, a napadac zna seed, moze da rekonstruise isti keystream i dekriptuje poruku. \n");
 
     return 0;
 }
